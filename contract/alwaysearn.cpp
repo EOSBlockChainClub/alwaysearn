@@ -1,5 +1,6 @@
 #include "alwaysearn.hpp"
 #include <eosiolib/eosio.hpp>
+#include <eosiolib/asset.hpp>
 
 namespace langchain {
 
@@ -7,7 +8,7 @@ void alwaysearn::addbid(
         eosio::name   name,
         std::string   strname,
         std::string   website,
-        uint64_t      price)
+        eosio::asset  price)
 {
 
     _bidder bidderstable( _self, _self.value);
@@ -21,7 +22,12 @@ void alwaysearn::addbid(
 
     _minprice pricetable(_self, _self.value);
     auto itr = pricetable.begin();
-    if (itr->price < price){
+    if (itr == pricetable.end() ){
+        pricetable.emplace(_self, [&](auto& s){
+            s.id = 1;
+            s.price = price;
+        });
+    } else if (itr->price < price){
         pricetable.modify(itr, _self, [&](auto& s){
             s.price = price;
         });

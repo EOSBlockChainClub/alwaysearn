@@ -14,15 +14,16 @@ namespace langchain {
              eosio::name    name;
              std::string    strname;
              std::string    website;
-             uint64_t       price;
+             eosio::asset   price;
 
              uint64_t primary_key()const { return id; }
          };
 
          struct [[eosio::table]] minprices{
-             uint64_t       price;
+             uint64_t           id;
+             eosio::asset       price;
 
-             uint64_t primary_key()const { return price; }
+             uint64_t primary_key()const { return id; }
          };
 
          typedef eosio::multi_index< "bidder"_n, bidders > _bidder;
@@ -35,7 +36,7 @@ namespace langchain {
          void addbid( eosio::name  name,
                       std::string  strname,
                       std::string  website,
-                      uint64_t     price);
+                      eosio::asset price);
 
          [[eosio::action]]
          void deleteall();
