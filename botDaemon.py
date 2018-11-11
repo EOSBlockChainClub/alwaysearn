@@ -2,7 +2,8 @@ import requests
 import json
 import traceback
 import pprint
-import pyeosio
+from eospy import EosClient
+from eospy.transaction_builder import TransactionBuilder, Action
 
 with open('config.json', 'r') as f:
     config = json.load(f)
@@ -34,7 +35,7 @@ class EncryptRecorder(object):
         return
 
     def send_message(self, chat_id, message):
-        apiEndpoint_send = "https://api.telegram.org/bot{}/sendMessage".format(self.token)
+        apiEndpoint_send = "https://api.telegram.org/bot{}/sendMessage".format(TELEGRAM_API_KEY)
         payloads = { 
               "chat_id": chat_id
             , "text": message
@@ -42,11 +43,11 @@ class EncryptRecorder(object):
             }
 
         try:
-            requests.post(apiEndpoint_send, data=payloads) as resp:
+            requests.post(apiEndpoint_send, data=payloads)
 
         except:
             traceback.print_exc()
-            await self.send_message(chat_id, message="Telegram is temporarily unavailable. Please try again.")
+            self.send_message(chat_id, message="Telegram is temporarily unavailable. Please try again.")
             return
 
     def bidrecord(self, name, str_name, website, price):
@@ -70,7 +71,7 @@ class EncryptRecorder(object):
         print("JSON to Bin")
         bin_param = self.client.chain_abi_json_to_bin(param)
         print(bin_param)
-        act = Action("bryanrhee", "recorddata", "bryanrhee", "active", bin_param['binargs'])
+        act = Action("bryanrhee", "addbid", "bryanrhee", "active", bin_param['binargs'])
         print("Sign")
         ready_tx, chain_id =  txBuilder.build_sign_transaction_request([act])
         signed_transaction = self.client.wallet_sign_transaction(ready_tx, ['EOS4xei1fKyvZaf4j4L886PKBNjigecy32ehru2DcSH9MLNuQtuTt'], chain_id)
@@ -123,14 +124,14 @@ class EncryptRecorder(object):
             text = unit_msg.get('text')
             photo = unit_msg.get('photo')
 
-            if text == '/price_koen':
+            if text == '/price':
                 token_price = self.getCurrPrice()
                 if token_price == None:
                     self.send_message(chat_id, "No bid record!")
                     continue
 
                 cur_fiat = 0.04
-                unit_token_price = cur_fiat / token_price
+                unit_token_price = "{0:.4f}".format(cur_fiat / token_price)
                 message = "Current bid: {} LCT / word\nToken price: {} USD / 1 LCT".format(token_price, unit_token_price)
                 self.send_message(chat_id, message)
 
@@ -138,7 +139,7 @@ class EncryptRecorder(object):
                 bid_status = self.getBiddingStatus()
                 bid_status_string = []
                 for unit_bid in bid_status:
-                    inline_bid = "Company: *{}*\nWebsite: *{}*\nPrice: *{} LCT* / word".format(unit_bid['strname'], unit_bid['website'], unit_bid['price'])
+                    inline_bid = "Company: *{}*\nWebsite: *{}*\nPrice: *{}* / word".format(unit_bid['strname'], unit_bid['website'], unit_bid['price'])
                     bid_status_string.append(inline_bid)
 
                 message = '\n\n'.join(bid_status_string)
@@ -148,12 +149,15 @@ class EncryptRecorder(object):
                 name = "ciceron"
                 strname = "CICERON"
                 website = "https://ciceron.me"
-                price = "0.02"
+                price = "0.0200"
                 self.bidrecord(name, strname, website, price)
+
+                message = "CICERON bidded with 0.02 LCT / word"
+                self.send_message(chat_id, message)
 
             elif photo is not None:
                 token_price = self.getCurrPrice()
-                message = "Translation request status\n\nTotal words: 2000 words\nTotal price: {} LCT\nEstimated price in fiat: 80.00 USD".format(token_price * 2000)
+                message = "Translation request status\n\nTotal words: 2000 words\nTotal price: {} LCT\nEstimated price in fiat: 80.00 USD".format(token_price * 2000 if token_price is not None else 0)
                 self.send_message(chat_id, message)
                 text = 'File uploaded'
 
