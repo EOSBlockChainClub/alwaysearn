@@ -30,4 +30,4 @@ void alwaysearn::deleteall(){
     }
 }
 
-EOSIO_DISPATCH( langchain::alwaysearn, (addbid)(deleall) )
+EOSIO_DISPATCH( langchain::alwaysearn, (addbid)(deleteall) )

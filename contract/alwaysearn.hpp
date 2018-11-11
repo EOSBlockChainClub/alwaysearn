@@ -26,7 +26,7 @@ namespace langchain {
          };
 
       public:
-         using contract::contract;
+         alwaysearn( eosio::name receiver, eosio::name code, eosio::datastream<const char*> ds ): eosio::contract(receiver, code, ds){}
 
          [[eosio::action]]
          void addbid( eosio::name  name,
