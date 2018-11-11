@@ -43,6 +43,13 @@ void alwaysearn::deleteall(){
        bidderstable.erase( itr );
        itr = bidderstable.begin();
     }
+
+    _minprice pricetable(_self, _self.value);
+    auto itr2 = pricetable.begin();
+    while (itr2 != pricetable.end() ){
+       pricetable.erase( itr2 );
+       itr2 = pricetable.begin();
+    }
 }
 
 }
