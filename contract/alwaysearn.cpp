@@ -1,4 +1,5 @@
 #include "alwaysearn.hpp"
+#include <eosiolib/eosio.hpp>
 
 namespace langchain {
 
@@ -9,7 +10,7 @@ void alwaysearn::addbid(
         uint64_t      price)
 {
 
-    bidder bidderstable( _self, _self);
+    _bidder bidderstable( _self, _self.value);
     bidderstable.emplace( _self, [&]( auto& s ) { 
        s.id         = bidderstable.available_primary_key();
        s.name       = name;
@@ -21,13 +22,15 @@ void alwaysearn::addbid(
 
 void alwaysearn::deleteall(){
     require_auth(_self);
-    bidder bidderstable(_self, _self);
+    _bidder bidderstable(_self, _self.value);
 
     auto itr = bidderstable.begin();
     while (itr != bidderstable.end() ){
        bidderstable.erase( itr );
        itr = bidderstable.begin();
     }
+}
+
 }
 
 EOSIO_DISPATCH( langchain::alwaysearn, (addbid)(deleteall) )

@@ -25,6 +25,9 @@ namespace langchain {
              uint64_t primary_key()const { return price; }
          };
 
+         typedef eosio::multi_index< "bidder"_n, bidders > _bidder;
+         typedef eosio::multi_index< "minprice"_n, minprices > _minprice;
+
       public:
          alwaysearn( eosio::name receiver, eosio::name code, eosio::datastream<const char*> ds ): eosio::contract(receiver, code, ds){}
 
@@ -36,9 +39,6 @@ namespace langchain {
 
          [[eosio::action]]
          void deleteall();
-
-         typedef eosio::multi_index< "bidder"_n, bidders > bidder;
-         typedef eosio::multi_index< "minprice"_n, minprices > minprice;
 
    };
 }
