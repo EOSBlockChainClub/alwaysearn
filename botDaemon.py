@@ -33,6 +33,22 @@ class EncryptRecorder(object):
             f.write(str(last_update_id))
         return
 
+    def send_message(self, chat_id, message):
+        apiEndpoint_send = "https://api.telegram.org/bot{}/sendMessage".format(self.token)
+        payloads = { 
+              "chat_id": chat_id
+            , "text": message
+            , "parse_mode": "Markdown"
+            }
+
+        try:
+            requests.post(apiEndpoint_send, data=payloads) as resp:
+
+        except:
+            traceback.print_exc()
+            await self.send_message(chat_id, message="Telegram is temporarily unavailable. Please try again.")
+            return
+
     def bidrecord(self, name, str_name, website, price):
         txBuilder = TransactionBuilder(self.client)
 
@@ -82,7 +98,7 @@ class EncryptRecorder(object):
         if len(rows['rows']) < 1:
             return None
 
-        token_price = rows['rows'][0]['price']
+        token_price = float(rows['rows'][0]['price'].split(' ')[0])
         return token_price
 
     def main(self):
@@ -103,27 +119,43 @@ class EncryptRecorder(object):
             else:
                 continue
 
+            chat_id = unit_msg.get('chat')['id']
             text = unit_msg.get('text')
             photo = unit_msg.get('photo')
-            if text is None:
-                continue
 
             if text == '/price_koen':
                 token_price = self.getCurrPrice()
-                cur_fiat = 10
-                unit_token_price = 
+                if token_price == None:
+                    self.send_message(chat_id, "No bid record!")
+                    continue
 
+                cur_fiat = 0.04
+                unit_token_price = cur_fiat / token_price
+                message = "Current bid: {} LCT / word\nToken price: {} USD / 1 LCT".format(token_price, unit_token_price)
+                self.send_message(chat_id, message)
 
             elif text == '/bidstatus':
-                pass
+                bid_status = self.getBiddingStatus()
+                bid_status_string = []
+                for unit_bid in bid_status:
+                    inline_bid = "Company: *{}*\nWebsite: *{}*\nPrice: *{} LCT* / word".format(unit_bid['strname'], unit_bid['website'], unit_bid['price'])
+                    bid_status_string.append(inline_bid)
+
+                message = '\n\n'.join(bid_status_string)
+                self.send_message(chat_id, message)
 
             elif text == '/bid':
-                pass
+                name = "ciceron"
+                strname = "CICERON"
+                website = "https://ciceron.me"
+                price = "0.02"
+                self.bidrecord(name, strname, website, price)
 
             elif photo is not None:
-
+                token_price = self.getCurrPrice()
+                message = "Translation request status\n\nTotal words: 2000 words\nTotal price: {} LCT\nEstimated price in fiat: 80.00 USD".format(token_price * 2000)
+                self.send_message(chat_id, message)
                 text = 'File uploaded'
-                pass
 
             print("User: {} | Text: {}".format(user, text))
 
