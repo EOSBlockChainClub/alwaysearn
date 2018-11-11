@@ -27,7 +27,7 @@ void alwaysearn::addbid(
             s.id = 1;
             s.price = price;
         });
-    } else if (itr->price < price){
+    } else if (itr->price > price){
         pricetable.modify(itr, _self, [&](auto& s){
             s.price = price;
         });
