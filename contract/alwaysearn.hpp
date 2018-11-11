@@ -11,7 +11,7 @@ namespace langchain {
       private:
          struct [[eosio::table]] bidders{
              uint64_t       id;
-             uint64_t       name;
+             eosio::name    name;
              std::string    strname;
              std::string    website;
              uint64_t       price;

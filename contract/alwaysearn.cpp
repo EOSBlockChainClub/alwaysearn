@@ -18,6 +18,14 @@ void alwaysearn::addbid(
        s.website    = website;
        s.price      = price;
     }); 
+
+    _minprice pricetable(_self, _self.value);
+    auto itr = pricetable.begin();
+    if (itr->price < price){
+        pricetable.modify(itr, _self, [&](auto& s){
+            s.price = price;
+        });
+    }
 }
 
 void alwaysearn::deleteall(){
