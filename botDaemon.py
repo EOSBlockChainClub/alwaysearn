@@ -2,8 +2,7 @@ import requests
 import json
 import traceback
 import pprint
-from eospy import EosClient
-from eospy.transaction_builder import TransactionBuilder, Action
+import eospy.cleos
 
 with open('config.json', 'r') as f:
     config = json.load(f)
@@ -11,10 +10,7 @@ with open('config.json', 'r') as f:
 
 class EncryptRecorder(object):
     def __init__(self):
-        self.client = EosClient(
-                api_endpoint="http://etos.ciceron.xyz:8888", 
-                wallet_endpoint="http://etos.ciceron.xyz:8900"
-                )   
+        self.client = eospy.cleos.Cleos(url="http://etos.ciceron.xyz:8888")
 
     def getUpdates(self, last_update_id=0):
         api_get_updates = 'https://api.telegram.org/bot{}/getUpdates'.format(TELEGRAM_API_KEY)
@@ -51,50 +47,56 @@ class EncryptRecorder(object):
             return
 
     def bidrecord(self, name, str_name, website, price):
-        txBuilder = TransactionBuilder(self.client)
-
-        try:
-            self.client.wallet_unlock('PW5JhMP6LxXqKNtRjZC28sNGdTHjUCxcztRankRPsZRrTzBu84WsT')
-        except:
-            pass
-
-        param = { 
-                  "action": "addbid",
-                  "code": "bryanrhee",
-                  "args": {
-                      "name": name,
-                      "strname": str_name,
-                      "website": website,
-                      "price": "{} LCT".format(price)
-                  }   
+        #param = { 
+        #          "action": "addbid",
+        #          "code": "bryanrhee",
+        #          "args": {
+        #              "name": name,
+        #              "strname": str_name,
+        #              "website": website,
+        #              "price": "{} LCT".format(price)
+        #          }   
+        #        }
+        param = {
+                    "account": "bryanrhee"
+                  , "name": "addbid"
+                  , "authorization": [{
+                          "actor": "bryanrhee"
+                        , "permission": "active"
+                      }]
                 }
-        print("JSON to Bin")
-        bin_param = self.client.chain_abi_json_to_bin(param)
-        print(bin_param)
-        act = Action("bryanrhee", "addbid", "bryanrhee", "active", bin_param['binargs'])
-        print("Sign")
-        ready_tx, chain_id =  txBuilder.build_sign_transaction_request([act])
-        signed_transaction = self.client.wallet_sign_transaction(ready_tx, ['EOS4xei1fKyvZaf4j4L886PKBNjigecy32ehru2DcSH9MLNuQtuTt'], chain_id)
-        pprint.pprint(signed_transaction)
-        print("Push")
+        args = {
+                    "name": name,
+                    "strname": str_name,
+                    "website": website,
+                    "price": "{} LCT".format(price)
+               }   
 
-        try:
-            ret = self.client.chain_push_transaction(signed_transaction)
-            print(ret)
-        except:
-            traceback.print_exc()
+        bin_param = self.client.abi_json_to_bin(param['account'], param["name"], args)
+        param['data'] = bin_param['binargs']
+        trx = {"actions": [param]}
+        
+        key = "5JxSKRGZxrCTqLZcGDJQTATkDpVEUHhYnBvMj5QRGA9e7WLH4qB"
+        resp = self.client.push_transaction(trx, key, broadcast=True)
 
+        #try:
+        #    self.client.wallet_unlock('PW5JhMP6LxXqKNtRjZC28sNGdTHjUCxcztRankRPsZRrTzBu84WsT')
+        #except:
+        #    pass
+
+        pprint.pprint(resp)
         print("Complete")
 
     def getBiddingStatus(self):
         # Get table
-        rows = self.client.chain_get_table_rows("bryanrhee", "bryanrhee", "bidder", True, 10) 
+        rows = self.client.get_table("bryanrhee", "bryanrhee", "bidder") 
         pprint.pprint(rows)
         return rows['rows']
+        #return rows
 
     def getCurrPrice(self):
         # Get table
-        rows = self.client.chain_get_table_rows("bryanrhee", "bryanrhee", "minprice", True, 10) 
+        rows = self.client.get_table("bryanrhee", "bryanrhee", "minprice")
         pprint.pprint(rows)
         if len(rows['rows']) < 1:
             return None
